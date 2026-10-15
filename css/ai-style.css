@@ -1,0 +1,194 @@
+/* AI Style - 小森的数字空间 */
+
+:root {
+  --global-font-size: 15px;
+}
+
+/* 深色渐变背景 */
+body {
+  background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 50%, #0f1628 100%) !important;
+  background-attachment: fixed !important;
+}
+
+#web_bg {
+  background: transparent !important;
+}
+
+/* 毛玻璃卡片 */
+.card-widget {
+  background: rgba(20, 25, 45, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 文章卡片 */
+.recent-post-item {
+  background: rgba(20, 25, 45, 0.8) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 212, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.recent-post-item:hover {
+  border-color: rgba(0, 212, 255, 0.3) !important;
+  box-shadow: 0 8px 40px rgba(0, 212, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+/* 导航栏 */
+#nav {
+  background: rgba(10, 14, 26, 0.9) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* 站点标题 */
+.site-info {
+  text-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+}
+
+#site-title, .site-name {
+  color: #fff !important;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+#site-subtitle {
+  color: #8892a4 !important;
+}
+
+/* 文章标题 */
+a.article-title {
+  color: #e4e8f0 !important;
+}
+
+a.article-title:hover {
+  color: #00d4ff !important;
+  text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+}
+
+.article-meta {
+  color: #6b7280 !important;
+}
+
+/* 标签云 */
+.tag-cloud a {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: #00d4ff !important;
+}
+
+.tag-cloud a:hover {
+  background: rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 14, 26, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00d4ff 0%, #7b2ff7 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00ffaa 0%, #00d4ff 100%);
+}
+
+/* 文章内容 */
+.post-content {
+  color: #c9d1d9 !important;
+}
+
+.post-content h1, .post-content h2, .post-content h3 {
+  color: #e4e8f0 !important;
+  border-image: linear-gradient(90deg, #00d4ff, #7b2ff7) 1;
+}
+
+.post-content code {
+  background: rgba(0, 212, 255, 0.08);
+  color: #00ffaa;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.post-content pre {
+  background: rgba(10, 14, 26, 0.95) !important;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.post-content blockquote {
+  background: linear-gradient(135deg, rgba(123, 47, 247, 0.08) 0%, rgba(0, 212, 255, 0.08) 100%);
+  border-left: 4px solid #7b2ff7;
+  color: #a8b2c1;
+}
+
+/* 分页 */
+.pagination .page-number, .pagination .extend {
+  background: rgba(20, 25, 45, 0.8);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: #8892a4;
+}
+
+.pagination .page-number:hover, .pagination .extend:hover {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: #00d4ff;
+  color: #00d4ff;
+}
+
+.pagination .page-number.current {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+/* 作者信息 */
+.author-info__name {
+  color: #e4e8f0 !important;
+}
+
+.author-info__description {
+  color: #8892a4 !important;
+}
+
+/* 页脚 */
+#footer {
+  background: rgba(10, 14, 26, 0.95) !important;
+  border-top: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* 返回顶部按钮 */
+.go-to-top {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.go-to-top:hover {
+  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.5);
+}
+
+/* 霓虹发光效果 */
+#site-title::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -8px;
+  left: 0;
+  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+  animation: neon-glow 2s ease-in-out infinite;
+}
+
+@keyframes neon-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}

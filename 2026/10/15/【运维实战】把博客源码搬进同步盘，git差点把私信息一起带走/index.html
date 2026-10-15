@@ -1,0 +1,382 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走 | 小森的数字空间</title><meta name="author" content="小森"><meta name="copyright" content="小森"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0a0e1a"><meta name="description" content="把 Hexo 博客源码搬进百度同步盘时连踩三个坑：主题自带 .git 变成 gitlink、node_modules 拖垮同步盘、git 历史快照让脱敏全部作废。最后用 git filter-branch 重写了全部提交。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走">
+<meta property="og:url" content="https://sanshisanfight.github.io/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/index.html">
+<meta property="og:site_name" content="小森的数字空间">
+<meta property="og:description" content="把 Hexo 博客源码搬进百度同步盘时连踩三个坑：主题自带 .git 变成 gitlink、node_modules 拖垮同步盘、git 历史快照让脱敏全部作废。最后用 git filter-branch 重写了全部提交。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png">
+<meta property="article:published_time" content="2026-10-15T15:10:00.000Z">
+<meta property="article:modified_time" content="2026-10-15T15:02:50.797Z">
+<meta property="article:author" content="小森">
+<meta property="article:tag" content="Git">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="隐私脱敏">
+<meta property="article:tag" content="Windows">
+<meta property="article:tag" content="内容工程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走",
+  "url": "https://sanshisanfight.github.io/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/",
+  "image": "https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png",
+  "datePublished": "2026-10-15T15:10:00.000Z",
+  "dateModified": "2026-10-15T15:02:50.797Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "小森",
+      "url": "https://sanshisanfight.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://sanshisanfight.github.io/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//fonts.googleapis.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0a0e1a')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":500,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/ai-style.css"><meta name="generator" content="Hexo 7.3.0"><link rel="alternate" href="/atom.xml" title="小森的数字空间" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="web_bg" style="background-color: #0a0e1a;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">33</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/%E9%A6%96"><span> 0</span></a></div><div class="menus_item"><a class="site-page" href="/%E9%A1%B5"><span> 1</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 2</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 3</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 4</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 5</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 6</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 7</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 8</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 9</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 10</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 11</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 12</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 13</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 14</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 15</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 16</span></a></div><div class="menus_item"><a class="site-page" href="/m"><span> 17</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 18</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 19</span></a></div><div class="menus_item"><a class="site-page" href="/%E6%A0%87"><span> 20</span></a></div><div class="menus_item"><a class="site-page" href="/%E7%AD%BE"><span> 21</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 22</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 23</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 24</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 25</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 26</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 27</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 28</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 29</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 30</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 31</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 32</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 33</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 34</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 35</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 36</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 37</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 38</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 39</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 40</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 41</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 42</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 43</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 44</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%88%86"><span> 45</span></a></div><div class="menus_item"><a class="site-page" href="/%E7%B1%BB"><span> 46</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 47</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 48</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 49</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 50</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 51</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 52</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 53</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 54</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 55</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 56</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 57</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 58</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 59</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 60</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 61</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 62</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 63</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 64</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 65</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 66</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 67</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 68</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 69</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 70</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 71</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 72</span></a></div><div class="menus_item"><a class="site-page" href="/l"><span> 73</span></a></div><div class="menus_item"><a class="site-page" href="/d"><span> 74</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 75</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 76</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 77</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 78</span></a></div><div class="menus_item"><a class="site-page" href="/p"><span> 79</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 80</span></a></div><div class="menus_item"><a class="site-page" href="/n"><span> 81</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 82</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%BD%92"><span> 83</span></a></div><div class="menus_item"><a class="site-page" href="/%E6%A1%A3"><span> 84</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 85</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 86</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 87</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 88</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 89</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 90</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 91</span></a></div><div class="menus_item"><a class="site-page" href="/v"><span> 92</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 93</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 94</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 95</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 96</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 97</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 98</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 99</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 100</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 101</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 102</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 103</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 104</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 105</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 106</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 107</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 108</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 109</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 110</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 111</span></a></div><div class="menus_item"><a class="site-page" href="/v"><span> 112</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 113</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 114</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3"><span> 115</span></a></div><div class="menus_item"><a class="site-page" href="/%E4%BA%8E"><span> 116</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 117</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 118</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 119</span></a></div><div class="menus_item"><a class="site-page" href="/b"><span> 120</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 121</span></a></div><div class="menus_item"><a class="site-page" href="/u"><span> 122</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 123</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 124</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 125</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 126</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 127</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 128</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 129</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 130</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 131</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 132</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 133</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 134</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 135</span></a></div><div class="menus_item"><a class="site-page" href="/u"><span> 136</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 137</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 138</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 139</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">小森的数字空间</span></a><a class="nav-page-title" href="/"><span class="site-name">【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/%E9%A6%96"><span> 0</span></a></div><div class="menus_item"><a class="site-page" href="/%E9%A1%B5"><span> 1</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 2</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 3</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 4</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 5</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 6</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 7</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 8</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 9</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 10</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 11</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 12</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 13</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 14</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 15</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 16</span></a></div><div class="menus_item"><a class="site-page" href="/m"><span> 17</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 18</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 19</span></a></div><div class="menus_item"><a class="site-page" href="/%E6%A0%87"><span> 20</span></a></div><div class="menus_item"><a class="site-page" href="/%E7%AD%BE"><span> 21</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 22</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 23</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 24</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 25</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 26</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 27</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 28</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 29</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 30</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 31</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 32</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 33</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 34</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 35</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 36</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 37</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 38</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 39</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 40</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 41</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 42</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 43</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 44</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%88%86"><span> 45</span></a></div><div class="menus_item"><a class="site-page" href="/%E7%B1%BB"><span> 46</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 47</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 48</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 49</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 50</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 51</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 52</span></a></div><div class="menus_item"><a class="site-page" href="/g"><span> 53</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 54</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 55</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 56</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 57</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 58</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 59</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 60</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 61</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 62</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 63</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 64</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 65</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 66</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 67</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 68</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 69</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 70</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 71</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 72</span></a></div><div class="menus_item"><a class="site-page" href="/l"><span> 73</span></a></div><div class="menus_item"><a class="site-page" href="/d"><span> 74</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 75</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 76</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 77</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 78</span></a></div><div class="menus_item"><a class="site-page" href="/p"><span> 79</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 80</span></a></div><div class="menus_item"><a class="site-page" href="/n"><span> 81</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 82</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%BD%92"><span> 83</span></a></div><div class="menus_item"><a class="site-page" href="/%E6%A1%A3"><span> 84</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 85</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 86</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 87</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 88</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 89</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 90</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 91</span></a></div><div class="menus_item"><a class="site-page" href="/v"><span> 92</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 93</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 94</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 95</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 96</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 97</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 98</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 99</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 100</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 101</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 102</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 103</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 104</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 105</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 106</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 107</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 108</span></a></div><div class="menus_item"><a class="site-page" href="/c"><span> 109</span></a></div><div class="menus_item"><a class="site-page" href="/h"><span> 110</span></a></div><div class="menus_item"><a class="site-page" href="/i"><span> 111</span></a></div><div class="menus_item"><a class="site-page" href="/v"><span> 112</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 113</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 114</span></a></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3"><span> 115</span></a></div><div class="menus_item"><a class="site-page" href="/%E4%BA%8E"><span> 116</span></a></div><div class="menus_item"><a class="site-page" href="/:"><span> 117</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 118</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 119</span></a></div><div class="menus_item"><a class="site-page" href="/b"><span> 120</span></a></div><div class="menus_item"><a class="site-page" href="/o"><span> 121</span></a></div><div class="menus_item"><a class="site-page" href="/u"><span> 122</span></a></div><div class="menus_item"><a class="site-page" href="/t"><span> 123</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 124</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 125</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 126</span></a></div><div class="menus_item"><a class="site-page" href="/%7C"><span> 127</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 128</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 129</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 130</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 131</span></a></div><div class="menus_item"><a class="site-page" href="/"><span> 132</span></a></div><div class="menus_item"><a class="site-page" href="/f"><span> 133</span></a></div><div class="menus_item"><a class="site-page" href="/a"><span> 134</span></a></div><div class="menus_item"><a class="site-page" href="/-"><span> 135</span></a></div><div class="menus_item"><a class="site-page" href="/u"><span> 136</span></a></div><div class="menus_item"><a class="site-page" href="/s"><span> 137</span></a></div><div class="menus_item"><a class="site-page" href="/e"><span> 138</span></a></div><div class="menus_item"><a class="site-page" href="/r"><span> 139</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-10-15T15:10:00.000Z" title="发表于 2026-10-15 23:10:00">2026-10-15</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-15T15:02:50.797Z" title="更新于 2026-10-15 23:02:50">2026-10-15</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F%E8%BF%90%E7%BB%B4/">云原生运维</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>10分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>今天干的事一句话说完：<strong>把个人博客的源码从老目录搬进百度同步盘，给它补上 git 版本控制，然后把所有隐私信息擦干净。</strong></p>
+<p>听着像体力活，实际卡了整整一下午。三个坑里有一个我到现在想起来还后背发凉——不是难，是<strong>我差点把真实邮箱和本地路径亲手推到 GitHub 上</strong>。</p>
+<p>这篇写完整过程，包括我认为最值得记住的那条认知。</p>
+<hr>
+<h2 id="一、最隐蔽的坑：git-add-了，但文件其实没进去"><a href="#一、最隐蔽的坑：git-add-了，但文件其实没进去" class="headerlink" title="一、最隐蔽的坑：git add 了，但文件其实没进去"></a>一、最隐蔽的坑：git add 了，但文件其实没进去</h2><p>搬完源码我照常 <code>git add .</code> 提交。然后去翻目录，发现不对——<strong>提交记录只有一条，指针大小 160 字节</strong>。</p>
+<p>我明明 add 了一个含 248 个文件的主题目录。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 看这次提交到底装了什么</span></span><br><span class="line">git show --<span class="built_in">stat</span> HEAD</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查主题目录里是不是藏着它自己的 .git</span></span><br><span class="line"><span class="built_in">ls</span> -la themes/butterfly/.git</span><br></pre></td></tr></table></figure>
+
+<p>一 ls，<code>.git</code> 赫然躺在那里。</p>
+<h3 id="根因：gitlink"><a href="#根因：gitlink" class="headerlink" title="根因：gitlink"></a>根因：gitlink</h3><p>当一个子目录自带 <code>.git</code> 时，git 不会把它当普通文件夹，而是记成一条 <strong>gitlink</strong>——只存一个指向那个子仓库的指针（tree mode <code>160000</code>），<strong>不存里面的文件</strong>。</p>
+<p>后果是什么？</p>
+<ul>
+<li><code>git status</code> 永远干净，你以为提交完了</li>
+<li>换台电脑 clone，主题目录是空的</li>
+<li>博客直接构建失败，而且<strong>很难查</strong>，因为本地一切正常</li>
+</ul>
+<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删掉子目录自带的 .git，让 git 当普通目录看</span></span><br><span class="line"><span class="built_in">rm</span> -rf themes/butterfly/.git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 确认 .gitignore 里没有忽略 themes/</span></span><br><span class="line">grep -n <span class="string">&quot;themes&quot;</span> .gitignore</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新 add 并核对文件数</span></span><br><span class="line">git add themes/</span><br><span class="line">git status --short | <span class="built_in">wc</span> -l</span><br><span class="line"><span class="comment"># 应该看到 220 行左右，而不是个位数</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="为什么没用-git-submodule"><a href="#为什么没用-git-submodule" class="headerlink" title="为什么没用 git submodule"></a>为什么没用 git submodule</h3><p>submodule 是 git 官方正规方案，但我这个源码在百度同步盘里，<strong>同步盘环境访问 GitHub 并不稳定</strong>，submodule 的 clone&#x2F;fetch 失败率高。而且 submodule 存的也只是 commit hash，换机时仍需额外拉子仓库。</p>
+<p>所以我选了土办法：<strong>把主题源码物理纳入主仓库</strong>。248 个文件、4.7MB，一次 clone 到位。</p>
+<blockquote>
+<p><strong>判断方法</strong>：某目录 <code>git add</code> 后提交内容异常少（比如只有一条 160 字节记录），先看它里面有没有 <code>.git</code>。</p>
+</blockquote>
+<hr>
+<h2 id="二、最容易被忽略的坑：14137-个小文件是同步盘的性能杀手"><a href="#二、最容易被忽略的坑：14137-个小文件是同步盘的性能杀手" class="headerlink" title="二、最容易被忽略的坑：14137 个小文件是同步盘的性能杀手"></a>二、最容易被忽略的坑：14137 个小文件是同步盘的性能杀手</h2><p>搬源码时我纠结了很久：整个博客目录 135MB，搬不搬？</p>
+<p>最后决定<strong>只搬 16.9MB &#x2F; 433 个文件</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>目录</th>
+<th>体积</th>
+<th>文件数</th>
+<th>决策</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>source/</code></td>
+<td>10.7MB</td>
+<td>17</td>
+<td>搬</td>
+</tr>
+<tr>
+<td><code>themes/</code></td>
+<td>6.3MB</td>
+<td>396</td>
+<td>搬</td>
+</tr>
+<tr>
+<td><code>scaffolds/</code> + <code>.github/</code> + 配置</td>
+<td>~300KB</td>
+<td>9</td>
+<td>搬</td>
+</tr>
+<tr>
+<td><code>node_modules/</code></td>
+<td>85.1MB</td>
+<td><strong>14137</strong></td>
+<td><strong>不搬</strong></td>
+</tr>
+<tr>
+<td><code>public/</code></td>
+<td>13.7MB</td>
+<td>76</td>
+<td>不搬</td>
+</tr>
+<tr>
+<td><code>.deploy_git/</code></td>
+<td>26.1MB</td>
+<td>701</td>
+<td>不搬</td>
+</tr>
+</tbody></table>
+<h3 id="为什么小文件特别致命"><a href="#为什么小文件特别致命" class="headerlink" title="为什么小文件特别致命"></a>为什么小文件特别致命</h3><p>百度网盘这类同步盘需要<strong>持续扫描目录树</strong>做增量对比。14137 个文件意味着它一直在扫，磁盘 IO 和同步流量全被吃掉。</p>
+<p>而这些文件，一条命令就能重建：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm install        <span class="comment"># 重建 node_modules</span></span><br><span class="line">npx hexo generate  <span class="comment"># 重建 public</span></span><br><span class="line">npx hexo deploy    <span class="comment"># 重建 .deploy_git</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="搬迁原则"><a href="#搬迁原则" class="headerlink" title="搬迁原则"></a>搬迁原则</h3><p><strong>能重建的一律不搬。</strong> 这样既控制了同步盘负担，也保证了「源码仓库是唯一事实来源」。</p>
+<p>搬完我还校验了源和目标的体积完全一致。这步别省——同步盘大文件传输中断是常事。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">du</span> -sh &lt;源目录&gt;/source &lt;目标目录&gt;/source</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、最痛心的坑：删了文件，历史里还在"><a href="#三、最痛心的坑：删了文件，历史里还在" class="headerlink" title="三、最痛心的坑：删了文件，历史里还在"></a>三、最痛心的坑：删了文件，历史里还在</h2><p>这个坑是等我想 push 的时候才发现的。</p>
+<p>我先做了常规脱敏——工作区里的真实邮箱、Windows 用户名、本地磁盘路径全部替换掉，占位符一套，行云流水。</p>
+<p>但当我准备推到 GitHub 时突然反应过来：</p>
+<p><strong>git 存储的是每一个提交的历史快照。</strong></p>
+<p>我改的是<strong>最新那一个版本</strong>。前面 9 个提交里，真实邮箱和路径原封不动地躺着。仓库一旦公开，这些全都能被挖出来。</p>
+<h3 id="第-1-层：替换文件内容（tree-filter）"><a href="#第-1-层：替换文件内容（tree-filter）" class="headerlink" title="第 1 层：替换文件内容（tree-filter）"></a>第 1 层：替换文件内容（tree-filter）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git filter-branch --tree-filter <span class="string">&#x27;</span></span><br><span class="line"><span class="string">  find . -type f \( -name &quot;*.md&quot; -o -name &quot;*.bat&quot; \) -print0 2&gt;/dev/null \</span></span><br><span class="line"><span class="string">  | xargs -0 sed -i \</span></span><br><span class="line"><span class="string">      -e &quot;s|C:\\\\Users\\\\&lt;用户名&gt;|python|g&quot; \</span></span><br><span class="line"><span class="string">      -e &quot;s|E:\\\\&lt;BLOG_DIR&gt;|&lt;BLOG_DIR&gt;|g&quot;</span></span><br><span class="line"><span class="string">&#x27;</span> -- --all</span><br></pre></td></tr></table></figure>
+
+<h3 id="第-2-层：替换提交元信息（env-filter）"><a href="#第-2-层：替换提交元信息（env-filter）" class="headerlink" title="第 2 层：替换提交元信息（env-filter）"></a>第 2 层：替换提交元信息（env-filter）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git filter-branch --env-filter <span class="string">&#x27;</span></span><br><span class="line"><span class="string">  if [ &quot;$GIT_AUTHOR_EMAIL&quot; != &quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot; ]; then</span></span><br><span class="line"><span class="string">    export GIT_AUTHOR_EMAIL=&quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot;</span></span><br><span class="line"><span class="string">  fi</span></span><br><span class="line"><span class="string">  if [ &quot;$GIT_COMMITTER_EMAIL&quot; != &quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot; ]; then</span></span><br><span class="line"><span class="string">    export GIT_COMMITTER_EMAIL=&quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot;</span></span><br><span class="line"><span class="string">  fi</span></span><br><span class="line"><span class="string">&#x27;</span> -- --all</span><br></pre></td></tr></table></figure>
+
+<p><strong>两层必须同时做。</strong> <code>tree-filter</code> 只管文件内容，<code>env-filter</code> 只管提交元信息（作者、提交者、邮箱）。只做一层，另一层照样残留。</p>
+<h3 id="第-3-层：三个后置动作，漏一个都不彻底"><a href="#第-3-层：三个后置动作，漏一个都不彻底" class="headerlink" title="第 3 层：三个后置动作，漏一个都不彻底"></a>第 3 层：三个后置动作，漏一个都不彻底</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删除 filter-branch 自动创建的原始备份引用——它指向的还是脱敏前的历史</span></span><br><span class="line"><span class="built_in">rm</span> -rf .git/refs/original/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 清空 reflog——所有旧的 HEAD 状态还记在日志里</span></span><br><span class="line">git reflog expire --expire=now --all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 物理清除废弃对象，让垃圾数据真正从磁盘消失</span></span><br><span class="line">git gc --prune=now --aggressive</span><br></pre></td></tr></table></figure>
+
+<p><code>refs/original/</code> 是 <code>filter-branch</code> 自己创建的备份引用。很多人只跑完 <code>filter-branch</code> 就以为完事了，结果这个引用还把脱敏前的历史完整保留着。</p>
+<h3 id="第-4-步：全量校验（不能只看最新提交）"><a href="#第-4-步：全量校验（不能只看最新提交）" class="headerlink" title="第 4 步：全量校验（不能只看最新提交）"></a>第 4 步：全量校验（不能只看最新提交）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 校验 1：所有提交的作者邮箱，应该只剩一个值</span></span><br><span class="line">git <span class="built_in">log</span> --all --format=<span class="string">&#x27;%ae&#x27;</span> | <span class="built_in">sort</span> -u</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 校验 2：所有 blob 逐个扫描敏感关键词</span></span><br><span class="line">git rev-list --all --objects | \</span><br><span class="line">  git cat-file --batch-check=<span class="string">&#x27;%(objecttype) %(objectname) %(rest)&#x27;</span> | \</span><br><span class="line">  awk <span class="string">&#x27;$1==&quot;blob&quot;&#123;print $2&#125;&#x27;</span> | \</span><br><span class="line">  git cat-file --batch | grep -n -E <span class="string">&quot;C:\\\\Users|E:\\\\&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>401 个 blob 扫完无残留，作者邮箱唯一值是 noreply。这才算完。</p>
+<h3 id="顺便提一个细节"><a href="#顺便提一个细节" class="headerlink" title="顺便提一个细节"></a>顺便提一个细节</h3><p>执行 <code>filter-branch</code> 时我被 SIGTERM 打断了。原因是 <strong><code>--tree-filter</code> 需要逐个提交 checkout 全部 401 个文件</strong>，放在同步盘目录下 IO 极慢。</p>
+<p>改写本身其实已经完成，手动补齐收尾步骤即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">rm</span> -rf .git-rewrite</span><br><span class="line">git reset --hard   <span class="comment"># 恢复被脚本误改的工作区文件</span></span><br></pre></td></tr></table></figure>
+
+<p>如果能重来，我会把仓库放在本地 SSD 完成历史重写，重写完再移回同步盘；或者直接用 <code>git filter-repo</code>（官方推荐，快一个数量级，但需要额外装 Python 包）。</p>
+<hr>
+<h2 id="四、顺手修的：Windows-中文-bat-脚本的编码坑"><a href="#四、顺手修的：Windows-中文-bat-脚本的编码坑" class="headerlink" title="四、顺手修的：Windows 中文 bat 脚本的编码坑"></a>四、顺手修的：Windows 中文 bat 脚本的编码坑</h2><p>我还修了个 <code>deploy.bat</code>——双击一键部署 Hexo 博客的脚本。</p>
+<p>双击之后输出错乱，出现 <code>echoHexo</code> 这种粘连命令，<code>REM</code> 注释行被当命令执行。</p>
+<h3 id="根因"><a href="#根因" class="headerlink" title="根因"></a>根因</h3><p><strong>CMD 解析 UTF-8 中文 bat 时错乱</strong>。默认代码页下中文是多字节，字符宽度导致命令与参数之间的空格分隔符丢失，<code>echo</code> 和参数被粘成 <code>echoHexo</code>。</p>
+<h3 id="解决：脚本正文全部改纯-ASCII"><a href="#解决：脚本正文全部改纯-ASCII" class="headerlink" title="解决：脚本正文全部改纯 ASCII"></a>解决：脚本正文全部改纯 ASCII</h3><figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"><span class="built_in">setlocal</span></span><br><span class="line"><span class="built_in">cd</span> /d &quot;%~dp0&quot;</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> [<span class="number">1</span>/<span class="number">3</span>] Cleaning...</span><br><span class="line"><span class="keyword">call</span> npx hexo clean</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">errorlevel</span> <span class="number">1</span> <span class="keyword">goto</span> failed</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> [<span class="number">2</span>/<span class="number">3</span>] Generating...</span><br><span class="line"><span class="keyword">call</span> npx hexo generate</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">errorlevel</span> <span class="number">1</span> <span class="keyword">goto</span> failed</span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> /p CHOICE=Deploy to remote? (y/N):</span><br><span class="line"><span class="keyword">if</span> /i &quot;<span class="variable">%CHOICE%</span>&quot;==&quot;y&quot; (</span><br><span class="line">  <span class="keyword">call</span> npx hexo deploy</span><br><span class="line">) <span class="keyword">else</span> (</span><br><span class="line">  <span class="built_in">echo</span> Cancelled.</span><br><span class="line">  <span class="keyword">goto</span> end</span><br><span class="line">)</span><br><span class="line"><span class="keyword">goto</span> end</span><br><span class="line"></span><br><span class="line">:failed</span><br><span class="line"><span class="built_in">echo</span> Build failed.</span><br><span class="line"><span class="keyword">exit</span> /b <span class="number">1</span></span><br><span class="line"></span><br><span class="line">:end</span><br><span class="line"><span class="built_in">endlocal</span></span><br></pre></td></tr></table></figure>
+
+<p>用 <code>%~dp0</code> 自动定位脚本所在目录，还有个附带好处：<strong>整个博客文件夹可以随意移动或改名，脚本不用改。</strong></p>
+<p>行尾也要统一，并在 <code>.gitattributes</code> 里声明：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">* text=auto eol=lf</span><br><span class="line">*.bat eol=crlf</span><br><span class="line">*.cmd eol=crlf</span><br><span class="line">*.ps1 eol=crlf</span><br><span class="line">*.png binary</span><br><span class="line">*.jpg binary</span><br><span class="line">*.woff binary</span><br></pre></td></tr></table></figure>
+
+<p>这个 <code>.gitattributes</code> 解决的是另一件事：Windows 上 git 持续提示 <code>LF will be replaced by CRLF</code>。仓库无行尾契约时，git 按本地 <code>core.autocrlf</code> 行为转换，跨平台构建会出问题。<code>.gitattributes</code> 是仓库级契约，优先级高于本地配置。</p>
+<hr>
+<h2 id="五、另外两个小坑"><a href="#五、另外两个小坑" class="headerlink" title="五、另外两个小坑"></a>五、另外两个小坑</h2><h3 id="5-1-脱敏文档自己的示例被误判为泄露"><a href="#5-1-脱敏文档自己的示例被误判为泄露" class="headerlink" title="5.1 脱敏文档自己的示例被误判为泄露"></a>5.1 脱敏文档自己的示例被误判为泄露</h3><p>我在脱敏记录文档里写「原文是 <code>C:\Users\&lt;用户名&gt;\</code>，改为 <code>python -c</code>」，想说明替换前后对比。</p>
+<p>结果跑自动扫描，<strong>把我文档里的示例值判成了隐私残留</strong>。</p>
+<p>改法：示例值也统一写成 <code>&lt;用户名&gt;</code>、<code>&lt;BLOG_DIR&gt;</code> 这类纯占位符，一个真实字符都不留。</p>
+<h3 id="5-2-Git-Bash-下批量替换反斜杠路径失败"><a href="#5-2-Git-Bash-下批量替换反斜杠路径失败" class="headerlink" title="5.2 Git Bash 下批量替换反斜杠路径失败"></a>5.2 Git Bash 下批量替换反斜杠路径失败</h3><p><code>sed -i &#39;s|C:\\Users\\xxx|...|&#39;</code> 和内联 Python 替换都失败，反斜杠转义层层叠加，正则被彻底破坏。</p>
+<p><strong>可靠做法：写临时 <code>.py</code> 脚本文件执行，或用编辑工具逐处替换。</strong> 不要用内联转义处理 Windows 反斜杠路径。</p>
+<hr>
+<h2 id="六、脱敏规范清单"><a href="#六、脱敏规范清单" class="headerlink" title="六、脱敏规范清单"></a>六、脱敏规范清单</h2><p>公开内容输出（博客 &#x2F; 文档 &#x2F; 开源项目）建议按下表处理：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>示例</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本地用户名与路径</td>
+<td><code>C:\Users\&lt;用户名&gt;\</code></td>
+<td>改为通用命令，如 <code>python -c &quot;...&quot;</code></td>
+</tr>
+<tr>
+<td>个人磁盘路径</td>
+<td><code>&lt;个人磁盘&gt;:\...</code></td>
+<td>改为 <code>&lt;BLOG_DIR&gt;</code> 等占位符</td>
+</tr>
+<tr>
+<td>真实邮箱</td>
+<td><code>&lt;真实邮箱&gt;</code></td>
+<td>改为 noreply 格式</td>
+</tr>
+<tr>
+<td>内网 IP &#x2F; 公司域名</td>
+<td><code>192.168.x.x</code>、内网域名</td>
+<td>改为 <code>192.168.100.101</code>、<code>example.com</code></td>
+</tr>
+<tr>
+<td>密钥 &#x2F; Token &#x2F; 证书</td>
+<td>任意</td>
+<td>一律用 <code>xxx</code> 代替</td>
+</tr>
+<tr>
+<td>客户名 &#x2F; 工单号</td>
+<td>任意</td>
+<td>删除或改写</td>
+</tr>
+<tr>
+<td>终端截图</td>
+<td>—</td>
+<td><strong>注意裁剪顶部路径与登录用户</strong></td>
+</tr>
+</tbody></table>
+<p><strong>可保留</strong>：作者昵称、GitHub 用户名（若图片 CDN 依赖该用户名，改名会导致所有历史文章图片失效）、已公开的技术内容。</p>
+<p><strong>提交前自查命令</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git grep -n -E <span class="string">&quot;C:\\\\Users|E:\\\\|[0-9]&#123;8,11&#125;&quot;</span> -- <span class="string">&quot;*.md&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>有输出就是有残留，需要处理。</p>
+<p>关于 noreply 邮箱：格式是 <code>用户ID+用户名@users.noreply.github.com</code>。即使仓库公开，GitHub 也不会把真实邮箱关联到账号。<strong>这是「公开代码但不暴露私人邮箱」的标准做法</strong>，建议所有公开仓库的 git 配置都换成它。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 仓库级 + 全局都设一遍</span></span><br><span class="line">git config user.email <span class="string">&quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot;</span></span><br><span class="line">git config --global user.email <span class="string">&quot;&lt;用户ID&gt;+sanshisanfight@users.noreply.github.com&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="七、最终验证"><a href="#七、最终验证" class="headerlink" title="七、最终验证"></a>七、最终验证</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 构建正常</span></span><br><span class="line">npm install &amp;&amp; npx hexo generate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. git 状态干净</span></span><br><span class="line">git status</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 作者邮箱唯一</span></span><br><span class="line">git <span class="built_in">log</span> --all --format=<span class="string">&#x27;%ae&#x27;</span> | <span class="built_in">sort</span> -u</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 无备份引用残留</span></span><br><span class="line"><span class="built_in">ls</span> .git/refs/original 2&gt;/dev/null</span><br><span class="line"><span class="comment"># 应报 No such file or directory</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 主题文件确实入库</span></span><br><span class="line">git ls-files themes/butterfly | <span class="built_in">wc</span> -l</span><br><span class="line"><span class="comment"># 应在 200+ 量级</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. git config 确认是 noreply</span></span><br><span class="line">git config user.email</span><br></pre></td></tr></table></figure>
+
+<p>全部通过后即可安全推送到公开远端。</p>
+<hr>
+<h2 id="今日收获"><a href="#今日收获" class="headerlink" title="今日收获"></a>今日收获</h2><p><strong>1. git 的每一个提交都是不可变的历史快照。你今天删除的信息，在昨天的快照里依然活着。</strong></p>
+<p>这个认知是我准备 push 的那一刻才真正建立的。之前我一直以为「改了文件、提交了，就等于删掉了」——完全错。给做公开内容输出的朋友一个建议：<strong>脱敏从第一次提交就开始做，别等要发布才回头擦</strong>。我今天是事后补救，近一半时间花在历史重写和校验上。</p>
+<p><strong>2. 「能重建的一律不搬」是迁移的第一原则。</strong></p>
+<p><code>node_modules</code>、<code>public</code>、<code>.deploy_git</code> 都是可重建产物。14137 个小文件对同步盘是持续的性能消耗，而 <code>npm install</code> 一条命令就能拿回来。源码才是唯一需要搬运的资产。</p>
+<p><strong>3. 当 <code>git status</code> 永远干净、但提交内容明显偏少时，先去看子目录里有没有 <code>.git</code>。</strong></p>
+<p>这是一个很容易掉进去、且<strong>本地完全看不出问题</strong>的坑——只有换机器 clone 时才会爆雷，而那通常是很久以后。养成「add 完顺手 <code>git show --stat</code> 看一眼」的习惯。</p>
+<hr>
+<h2 id="接下来"><a href="#接下来" class="headerlink" title="接下来"></a>接下来</h2><p>明天进入运维实战靶场的<strong>阶段 0：环境准备</strong>。第一步是清理宿主机内存——32GB 总量但只剩 3.7GB 空闲，VMware 开不出来。这是整个六阶段路线的第一个阻塞项。</p>
+<p>后续会记录 VMware 装法、Host-only 网络配置、三台 VM 创建、免密 SSH 打通的全过程。</p>
+<p>如果你也在做内容工程或公开输出，欢迎在评论区交流你遇到过的 git 历史脱敏问题。我用的是 <code>filter-branch</code>（官方已标记不推荐），社区更推荐 <code>filter-repo</code>，想听听大家的实际选择理由。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://sanshisanfight.github.io">小森</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://sanshisanfight.github.io/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/">https://sanshisanfight.github.io/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://sanshisanfight.github.io" target="_blank">小森的数字空间</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Git/">Git</a><a class="post-meta__tags" href="/tags/Hexo/">Hexo</a><a class="post-meta__tags" href="/tags/%E9%9A%90%E7%A7%81%E8%84%B1%E6%95%8F/">隐私脱敏</a><a class="post-meta__tags" href="/tags/Windows/">Windows</a><a class="post-meta__tags" href="/tags/%E5%86%85%E5%AE%B9%E5%B7%A5%E7%A8%8B/">内容工程</a></div><div class="post-share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/10/15/hello-world/" title="Hello World"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Hello World</div></div><div class="info-2"><div class="info-item-1">Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick StartCreate a new post1$ hexo new &quot;My New Post&quot;  More info: Writing Run server1$ hexo server  More info: Server Generate static files1$ hexo generate  More info: Generating Deploy to remote sites1$ hexo deploy  More info: Deployment </div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://cdn.jsdelivr.net/gh/sanshisanfight/sanshisanfight.github.io@main/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">小森</div><div class="author-info-description">安全 / AI / ICT 探索者 · 小森</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">33</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/sanshisanfight"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/sanshisanfight" target="_blank" title="GitHub"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:sanshisanfight@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">🎯 2026 目标：CTF / HCIE / AI 工具</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%9C%80%E9%9A%90%E8%94%BD%E7%9A%84%E5%9D%91%EF%BC%9Agit-add-%E4%BA%86%EF%BC%8C%E4%BD%86%E6%96%87%E4%BB%B6%E5%85%B6%E5%AE%9E%E6%B2%A1%E8%BF%9B%E5%8E%BB"><span class="toc-number">1.</span> <span class="toc-text">一、最隐蔽的坑：git add 了，但文件其实没进去</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%EF%BC%9Agitlink"><span class="toc-number">1.1.</span> <span class="toc-text">根因：gitlink</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-number">1.2.</span> <span class="toc-text">解决</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B2%A1%E7%94%A8-git-submodule"><span class="toc-number">1.3.</span> <span class="toc-text">为什么没用 git submodule</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%9C%80%E5%AE%B9%E6%98%93%E8%A2%AB%E5%BF%BD%E7%95%A5%E7%9A%84%E5%9D%91%EF%BC%9A14137-%E4%B8%AA%E5%B0%8F%E6%96%87%E4%BB%B6%E6%98%AF%E5%90%8C%E6%AD%A5%E7%9B%98%E7%9A%84%E6%80%A7%E8%83%BD%E6%9D%80%E6%89%8B"><span class="toc-number">2.</span> <span class="toc-text">二、最容易被忽略的坑：14137 个小文件是同步盘的性能杀手</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B0%8F%E6%96%87%E4%BB%B6%E7%89%B9%E5%88%AB%E8%87%B4%E5%91%BD"><span class="toc-number">2.1.</span> <span class="toc-text">为什么小文件特别致命</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%90%AC%E8%BF%81%E5%8E%9F%E5%88%99"><span class="toc-number">2.2.</span> <span class="toc-text">搬迁原则</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9C%80%E7%97%9B%E5%BF%83%E7%9A%84%E5%9D%91%EF%BC%9A%E5%88%A0%E4%BA%86%E6%96%87%E4%BB%B6%EF%BC%8C%E5%8E%86%E5%8F%B2%E9%87%8C%E8%BF%98%E5%9C%A8"><span class="toc-number">3.</span> <span class="toc-text">三、最痛心的坑：删了文件，历史里还在</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC-1-%E5%B1%82%EF%BC%9A%E6%9B%BF%E6%8D%A2%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9%EF%BC%88tree-filter%EF%BC%89"><span class="toc-number">3.1.</span> <span class="toc-text">第 1 层：替换文件内容（tree-filter）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC-2-%E5%B1%82%EF%BC%9A%E6%9B%BF%E6%8D%A2%E6%8F%90%E4%BA%A4%E5%85%83%E4%BF%A1%E6%81%AF%EF%BC%88env-filter%EF%BC%89"><span class="toc-number">3.2.</span> <span class="toc-text">第 2 层：替换提交元信息（env-filter）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC-3-%E5%B1%82%EF%BC%9A%E4%B8%89%E4%B8%AA%E5%90%8E%E7%BD%AE%E5%8A%A8%E4%BD%9C%EF%BC%8C%E6%BC%8F%E4%B8%80%E4%B8%AA%E9%83%BD%E4%B8%8D%E5%BD%BB%E5%BA%95"><span class="toc-number">3.3.</span> <span class="toc-text">第 3 层：三个后置动作，漏一个都不彻底</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E5%85%A8%E9%87%8F%E6%A0%A1%E9%AA%8C%EF%BC%88%E4%B8%8D%E8%83%BD%E5%8F%AA%E7%9C%8B%E6%9C%80%E6%96%B0%E6%8F%90%E4%BA%A4%EF%BC%89"><span class="toc-number">3.4.</span> <span class="toc-text">第 4 步：全量校验（不能只看最新提交）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%BA%E4%BE%BF%E6%8F%90%E4%B8%80%E4%B8%AA%E7%BB%86%E8%8A%82"><span class="toc-number">3.5.</span> <span class="toc-text">顺便提一个细节</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%A1%BA%E6%89%8B%E4%BF%AE%E7%9A%84%EF%BC%9AWindows-%E4%B8%AD%E6%96%87-bat-%E8%84%9A%E6%9C%AC%E7%9A%84%E7%BC%96%E7%A0%81%E5%9D%91"><span class="toc-number">4.</span> <span class="toc-text">四、顺手修的：Windows 中文 bat 脚本的编码坑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0"><span class="toc-number">4.1.</span> <span class="toc-text">根因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%EF%BC%9A%E8%84%9A%E6%9C%AC%E6%AD%A3%E6%96%87%E5%85%A8%E9%83%A8%E6%94%B9%E7%BA%AF-ASCII"><span class="toc-number">4.2.</span> <span class="toc-text">解决：脚本正文全部改纯 ASCII</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%8F%A6%E5%A4%96%E4%B8%A4%E4%B8%AA%E5%B0%8F%E5%9D%91"><span class="toc-number">5.</span> <span class="toc-text">五、另外两个小坑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E8%84%B1%E6%95%8F%E6%96%87%E6%A1%A3%E8%87%AA%E5%B7%B1%E7%9A%84%E7%A4%BA%E4%BE%8B%E8%A2%AB%E8%AF%AF%E5%88%A4%E4%B8%BA%E6%B3%84%E9%9C%B2"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 脱敏文档自己的示例被误判为泄露</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-Git-Bash-%E4%B8%8B%E6%89%B9%E9%87%8F%E6%9B%BF%E6%8D%A2%E5%8F%8D%E6%96%9C%E6%9D%A0%E8%B7%AF%E5%BE%84%E5%A4%B1%E8%B4%A5"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 Git Bash 下批量替换反斜杠路径失败</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%84%B1%E6%95%8F%E8%A7%84%E8%8C%83%E6%B8%85%E5%8D%95"><span class="toc-number">6.</span> <span class="toc-text">六、脱敏规范清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%9C%80%E7%BB%88%E9%AA%8C%E8%AF%81"><span class="toc-number">7.</span> <span class="toc-text">七、最终验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8A%E6%97%A5%E6%94%B6%E8%8E%B7"><span class="toc-number">8.</span> <span class="toc-text">今日收获</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E4%B8%8B%E6%9D%A5"><span class="toc-number">9.</span> <span class="toc-text">接下来</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E6%8A%8A%E5%8D%9A%E5%AE%A2%E6%BA%90%E7%A0%81%E6%90%AC%E8%BF%9B%E5%90%8C%E6%AD%A5%E7%9B%98%EF%BC%8Cgit%E5%B7%AE%E7%82%B9%E6%8A%8A%E7%A7%81%E4%BF%A1%E6%81%AF%E4%B8%80%E8%B5%B7%E5%B8%A6%E8%B5%B0/" title="【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走">【运维实战】把博客源码搬进同步盘，git 差点把私信息一起带走</a><time datetime="2026-10-15T15:10:00.000Z" title="发表于 2026-10-15 23:10:00">2026-10-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/10/15/hello-world/" title="Hello World">Hello World</a><time datetime="2026-10-15T11:34:23.532Z" title="发表于 2026-10-15 19:34:23">2026-10-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/10/15/%E3%80%90%E8%BF%90%E7%BB%B4%E5%AE%9E%E6%88%98%E3%80%91%E5%BC%80%E5%B9%B2%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B9%8B%E5%89%8D%E5%85%88%E7%9C%8B%E7%9C%8B%E4%BD%A0%E7%9A%84%E7%94%B5%E8%84%91%E6%89%9B%E4%B8%8D%E6%89%9B%E5%BE%97%E4%BD%8F/" title="【运维实战】开干云原生之前，先看看你的电脑扛不扛得住">【运维实战】开干云原生之前，先看看你的电脑扛不扛得住</a><time datetime="2026-10-15T11:30:00.000Z" title="发表于 2026-10-15 19:30:00">2026-10-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/17/SDH-OTN%E4%B8%9A%E5%8A%A1%E6%89%BF%E8%BD%BD%E6%8A%80%E6%9C%AF%E9%97%AE%E7%AD%94%E6%89%8B%E5%86%8C/" title="SDH/OTN 业务承载技术问答手册">SDH/OTN 业务承载技术问答手册</a><time datetime="2026-05-17T05:00:00.000Z" title="发表于 2026-05-17 13:00:00">2026-05-17</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/04/06/%E6%AD%A3%E5%88%99%E6%8F%90%E5%8F%96%E5%88%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%88%86%E7%A0%B4-CTF%E5%AE%9E%E6%88%98%E5%85%A8%E8%AE%B0%E5%BD%95/" title="正则提取到多线程爆破：CTF实战全记录">正则提取到多线程爆破：CTF实战全记录</a><time datetime="2026-04-06T11:00:00.000Z" title="发表于 2026-04-06 19:00:00">2026-04-06</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 小森</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.3</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><canvas class="fireworks" mobile="true"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script id="canvas_nest" defer="defer" color="0,212,255" opacity="0.5" zIndex="-1" count="80" mobile="true" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
